@@ -1,0 +1,9 @@
+{
+  "name": "playlist-component",
+  "version": "1.0.0",
+  "main": "index.js",
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/brave/playlist-component.git"
+  }
+}
