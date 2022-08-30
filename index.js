@@ -7,22 +7,22 @@
   function is_nan(value) {
       return typeof value === "number" && value !== value;
   }
-  
+
   function is_infinite(value) {
       return typeof value === "number" && (value === Infinity || value === -Infinity);
   }
-  
+
   function clamp_duration(value) {
       if (is_nan(value)) {
           return 0.0;
       }
-      
+
       if (is_infinite(value)) {
           return Number.MAX_VALUE;
       }
       return value;
   }
-  
+
   // Algorithm:
   // Generate a random number from 0 to 256
   // Roll-Over clamp to the range [0, 15]
@@ -31,11 +31,11 @@
   // Subtract that number from 15 (XOR) and convert the result to hex.
   function uuid_v4() {
       // X >> 2 = X / 4 (integer division)
-      
+
       // AND-ing (15 >> 0) roll-over clamps to 15
       // AND-ing (15 >> 2) roll-over clamps to 3
       // So '8' digit is clamped to 3 (inclusive) and all others clamped to 15 (inclusive).
-      
+
       // 0 XOR 15 = 15
       // 1 XOR 15 = 14
       // 8 XOR 15 = 7
@@ -47,7 +47,7 @@
           return (X ^ (crypto.getRandomValues(new Uint8Array(1))[0] & (15 >> (X >> 2)))).toString(16);
       });
   }
-  
+
   function tagNode(node) {
       if (node) {
           if (!node.tagUUID) {
@@ -56,7 +56,7 @@
           }
       }
   }
-    
+
   function getNodeSource(node, src, mimeType, thumbnail) {
     var name = node.title;
     if (name == null || typeof name == 'undefined' || name == "") {
@@ -84,7 +84,7 @@
 
     if (src && src !== "") {
       tagNode(node);
-      return {
+      return [{
         "name": name,
         "src": src,
         "pageSrc": window.location.href,
@@ -94,14 +94,15 @@
         "detected": true,
         "tagId": node.tagUUID,
         thumbnail
-      };
+      }];
     } else {
-      var target = node;
+      let target = node;
+      let sources = []
       document.querySelectorAll('source').forEach(function(node) {
         if (node.src !== "") {
           if (node.closest('video') === target) {
             tagNode(target);
-            return {
+            sources.push({
               "name": name,
               "src": node.src,
               "pageSrc": window.location.href,
@@ -111,12 +112,12 @@
               "detected": true,
               "tagId": target.tagUUID,
               thumbnail
-            };
+            });
           }
 
           if (node.closest('audio') === target) {
             tagNode(target);
-            return {
+            sources.push({
               "name": name,
               "src": node.src,
               "pageSrc": window.location.href,
@@ -126,10 +127,12 @@
               "detected": true,
               "tagId": target.tagUUID,
               thumbnail
-            };
+            });
           }
         }
+        
       });
+      return sources;
     }
   }
 
@@ -149,22 +152,11 @@
     return document.querySelector('meta[property="og:image"]')?.content
   }
 
-  let videoElements = getAllVideoElements();
-  let audioElements = getAllAudioElements();
-  if (!videoElements) {
-    videoElements = [];
-  }
-
-  if (!audioElements) {
-    audioElements = [];
-  }
-  
-
+  let videoElements = getAllVideoElements() ?? [];
+  let audioElements = getAllAudioElements() ?? [];
   const thumbnail = getOGTagImage();
-  let medias = [...videoElements].map(e => getNodeData(e, thumbnail));
-  medias = medias.concat([...audioElements].map(e => getNodeData(e, thumbnail)));
-  if (medias.length)
+  let medias = []
+  videoElements.forEach(e => medias = medias.concat( getNodeData(e, thumbnail)));
+  audioElements.forEach(e => medias = medias.concat( getNodeData(e, thumbnail)));
     return medias;
-
-  return videoElements;
 })();
