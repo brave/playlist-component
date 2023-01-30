@@ -23,9 +23,8 @@
   }
 
   function getNodeData (node) {
-    let src = fixUpRelativeUrl(node.src)
+    const src = fixUpRelativeUrl(node.src)
     let mimeType = node.type
-    let name = getMediaTitle(node)
     if (mimeType == null || typeof mimeType === 'undefined' || mimeType === '') {
       if (node.constructor.name === 'HTMLVideoElement') {
         mimeType = 'video'
@@ -43,6 +42,7 @@
         }
       }
     }
+    const name = getMediaTitle(node)
 
     if (src && src !== '') {
       return [{
@@ -55,8 +55,8 @@
         'detected': true
       }]
     } else {
-      let target = node
-      let sources = []
+      const target = node
+      const sources = []
       document.querySelectorAll('source').forEach(function (node) {
         if (node.src !== '') {
           if (node.closest('video') === target) {
