@@ -1,0 +1,28 @@
+{
+  "compilerOptions": {
+    "sourceMap": true,
+    "noImplicitAny": true,
+    // chrome 80 supports 100% es2019
+    "target": "es2019",
+    "allowJs": true,
+    "lib": [
+      "es6",
+      "dom",
+      "DOM.Iterable",
+      "es7",
+      "es2017",
+      "es2018",
+      "es2019",
+      "esnext"
+    ],
+    "moduleResolution": "node",
+    "baseUrl": ".",
+    // optional
+    "forceConsistentCasingInFileNames": true,
+    "noImplicitReturns": true,
+    "strictNullChecks": true,
+    "suppressImplicitAnyIndexErrors": true,
+    "noUnusedLocals": true
+  },
+  "include": []
+}

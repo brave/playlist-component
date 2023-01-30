@@ -11,23 +11,23 @@ const siteSpecificDetector = { // eslint-disable-line no-unused-vars
       // The last one is known to be one with the highest resolution
       thumbnail = thumbnail[thumbnail.length - 1]?.url
     }
-    return (typeof(thumbnail) === 'string' && (thumbnail.startsWith('/') || thumbnail.startsWith('http://') || thumbnail.startsWith('https://'))) 
-        ? thumbnail : null
+    return (typeof (thumbnail) === 'string' && (thumbnail.startsWith('/') || thumbnail.startsWith('http://') || thumbnail.startsWith('https://')))
+      ? thumbnail : null
   },
   getMediaTitle: function (node) {
     const title = window.ytplayer?.bootstrapPlayerResponse?.videoDetails?.title
-    return typeof(title) === 'string' ? title : null
+    return typeof (title) === 'string' ? title : null
   },
   getMediaAuthor: function (node) {
     const author = window.ytplayer?.bootstrapPlayerResponse?.videoDetails?.author
-    return typeof(author) === 'string' ? author : null
+    return typeof (author) === 'string' ? author : null
   },
   getMediaDurationInSeconds: function (node) {
     let duration = window.ytplayer?.bootstrapPlayerResponse?.videoDetails?.lengthSeconds
-    if (typeof(duration) == 'string') {
+    if (typeof (duration) === 'string') {
       duration = Number.parseFloat(duration)
       return Number.isNaN(duration) ? null : duration
     }
-    return typeof(duration) === 'number' ? duration : null
+    return typeof (duration) === 'number' ? duration : null
   }
 }
