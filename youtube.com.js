@@ -1,8 +1,3 @@
-// Copyright (c) 2023 The Brave Authors. All rights reserved.
-// This Source Code Form is subject to the terms of the Mozilla Public
-// License, v. 2.0. If a copy of the MPL was not distributed with this file,
-// You can obtain one at https://mozilla.org/MPL/2.0/.
-
 // YouTube specific script to get metadata for media.
 const siteSpecificDetector = { // eslint-disable-line no-unused-vars
   getThumbnail: function () {
@@ -16,11 +11,11 @@ const siteSpecificDetector = { // eslint-disable-line no-unused-vars
   },
   getMediaTitle: function (node) {
     const title = window.ytplayer?.bootstrapPlayerResponse?.videoDetails?.title
-    return typeof title === 'string' ? title : null
+    return typeof title ===  'string' ? title : null
   },
   getMediaAuthor: function (node) {
     const author = window.ytplayer?.bootstrapPlayerResponse?.videoDetails?.author
-    return typeof author === 'string' ? author : null
+    return typeof(author) == 'string' ? author : null
   },
   getMediaDurationInSeconds: function (node) {
     let duration = window.ytplayer?.bootstrapPlayerResponse?.videoDetails?.lengthSeconds
