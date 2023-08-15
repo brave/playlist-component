@@ -44,11 +44,14 @@
     }
     const name = getMediaTitle(node)
 
+    const pageSrcUrl = new URL(window.location.href)
+    pageSrcUrl.hash = ''
+
     if (src && src !== '') {
       return [{
         'name': name,
         'src': src,
-        'pageSrc': window.location.href,
+        'pageSrc': pageSrcUrl.href,
         'pageTitle': document.title,
         'mimeType': mimeType,
         'duration': getMediaDurationInSeconds(node),
@@ -63,7 +66,7 @@
             sources.push({
               'name': name,
               'src': fixUpRelativeUrl(node.src),
-              'pageSrc': window.location.href,
+              'pageSrc': pageSrcUrl.href,
               'pageTitle': document.title,
               'mimeType': mimeType,
               'duration': getMediaDurationInSeconds(target),
@@ -75,7 +78,7 @@
             sources.push({
               'name': name,
               'src': fixUpRelativeUrl(node.src),
-              'pageSrc': window.location.href,
+              'pageSrc': pageSrcUrl.href,
               'pageTitle': document.title,
               'mimeType': mimeType,
               'duration': getMediaDurationInSeconds(target),
