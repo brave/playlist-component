@@ -9,12 +9,28 @@
   // This will be replaced by native code on demand.
   const siteSpecificDetector = null
 
-  function fixUpRelativeUrl (url) {
+  function isHttpsScheme (url) {
     if (!url || typeof url !== 'string') {
-      return url
+      return false
     }
 
-    if (!url.startsWith('http://') || !url.startsWith('https://')) {
+    let isHttpsScheme = false
+    try {
+      // In case of http: or data: protocol, the base URL is not used
+      isHttpsScheme = new URL(url, window.location.origin).protocol === 'https:'
+    } catch (e) {
+      // Ignore
+    }
+
+    return isHttpsScheme
+  }
+
+  function fixUpUrl (url) {
+    if (!isHttpsScheme(url)) {
+      return null
+    }
+    
+    if (!url.startsWith('https://')) {
       // Fix up relative path to absolute path
       url = new URL(url, window.location.origin).href
     }
@@ -23,7 +39,7 @@
   }
 
   function getNodeData (node) {
-    const src = fixUpRelativeUrl(node.src)
+    const src = fixUpUrl(node.src)
     let mimeType = node.type
     if (mimeType == null || typeof mimeType === 'undefined' || mimeType === '') {
       if (node.constructor.name === 'HTMLVideoElement') {
@@ -47,7 +63,7 @@
     if (src && src !== '') {
       return [{
         'name': name,
-        'src': src,
+        src,
         'pageSrc': window.location.href,
         'pageTitle': document.title,
         'mimeType': mimeType,
@@ -58,11 +74,12 @@
       const target = node
       const sources = []
       document.querySelectorAll('source').forEach(function (node) {
-        if (node.src !== '') {
+        const src = fixUpUrl(node.src)
+        if (src && src !== '') {
           if (node.closest('video') === target) {
             sources.push({
               'name': name,
-              'src': fixUpRelativeUrl(node.src),
+              src,
               'pageSrc': window.location.href,
               'pageTitle': document.title,
               'mimeType': mimeType,
@@ -74,7 +91,7 @@
           if (node.closest('audio') === target) {
             sources.push({
               'name': name,
-              'src': fixUpRelativeUrl(node.src),
+              src,
               'pageSrc': window.location.href,
               'pageTitle': document.title,
               'mimeType': mimeType,
@@ -104,7 +121,7 @@
       thumbnail = siteSpecificDetector.getThumbnail()
     }
 
-    return fixUpRelativeUrl(thumbnail)
+    return fixUpUrl(thumbnail)
   }
 
   function getMediaTitle (node) {
