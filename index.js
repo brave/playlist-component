@@ -29,7 +29,7 @@
     if (!isHttpsScheme(url)) {
       return null
     }
-    
+
     if (!url.startsWith('https://')) {
       // Fix up relative path to absolute path
       url = new URL(url, window.location.origin).href
@@ -60,7 +60,7 @@
     }
     const name = getMediaTitle(node)
 
-    if (src && src !== '') {
+    if (src) {
       return [{
         'name': name,
         src,
@@ -75,7 +75,7 @@
       const sources = []
       document.querySelectorAll('source').forEach(function (node) {
         const src = fixUpUrl(node.src)
-        if (src && src !== '') {
+        if (src) {
           if (node.closest('video') === target) {
             sources.push({
               'name': name,
