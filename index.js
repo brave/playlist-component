@@ -5,13 +5,45 @@
 
 // This script is modified version of
 // https://github.com/brave/brave-ios/blob/development/Client/Frontend/UserContent/UserScripts/Playlist.js
-(function () {
+medias = (async function () {
   // This will be replaced by native code on demand.
   const siteSpecificDetector = null
+
+  async function isMediaSourceObjectURL (src) {
+    if (!src || !src.startsWith('blob:')) {
+      return false
+    }
+
+    const controller = new AbortController()
+    const signal = controller.signal
+    let timeout
+    const maybeAbortFetch = new Promise(resolve =>
+      timeout = setTimeout(() => resolve(false), 500)
+    )
+
+    return Promise.any([
+      new Promise(resolve => {
+        fetch(src, {
+          signal
+        }).then(response => {
+          resolve(false)
+        }).catch(() => {
+          resolve(true)
+        }).finally(() => {
+          clearTimeout(timeout)
+        })
+      }),
+      maybeAbortFetch
+    ])
+  }
 
   function isHttpsScheme (url) {
     if (!url || typeof url !== 'string') {
       return false
+    }
+
+    if (url.startsWith('blob:')) {
+      url = url.substring(5)
     }
 
     let isHttpsScheme = false
@@ -38,8 +70,9 @@
     return url
   }
 
-  function getNodeData (node) {
+  async function getNodeData (node) {
     const src = fixUpUrl(node.src)
+    const srcIsMediaSourceObjectURL = await isMediaSourceObjectURL(src)
     let mimeType = node.type
     if (mimeType == null || typeof mimeType === 'undefined' || mimeType === '') {
       if (node.constructor.name === 'HTMLVideoElement') {
@@ -58,51 +91,39 @@
         }
       }
     }
-    const name = getMediaTitle(node)
+
+    const result = {
+      'name': getMediaTitle(node),
+      src,
+      srcIsMediaSourceObjectURL,
+      'pageSrc': window.location.href,
+      'pageTitle': document.title,
+      mimeType,
+      'duration': getMediaDurationInSeconds(node),
+      'detected': true
+    }
 
     if (src) {
-      return [{
-        'name': name,
-        src,
-        'pageSrc': window.location.href,
-        'pageTitle': document.title,
-        'mimeType': mimeType,
-        'duration': getMediaDurationInSeconds(node),
-        'detected': true
-      }]
-    } else {
-      const target = node
-      const sources = []
-      document.querySelectorAll('source').forEach(function (node) {
-        const src = fixUpUrl(node.src)
-        if (src) {
-          if (node.closest('video') === target) {
-            sources.push({
-              'name': name,
-              src,
-              'pageSrc': window.location.href,
-              'pageTitle': document.title,
-              'mimeType': mimeType,
-              'duration': getMediaDurationInSeconds(target),
-              'detected': true
-            })
-          }
-
-          if (node.closest('audio') === target) {
-            sources.push({
-              'name': name,
-              src,
-              'pageSrc': window.location.href,
-              'pageTitle': document.title,
-              'mimeType': mimeType,
-              'duration': getMediaDurationInSeconds(target),
-              'detected': true
-            })
-          }
-        }
-      })
-      return sources
+      return [result]
     }
+
+    const target = node
+    const sources = []
+    for (const node of document.querySelectorAll('source')) {
+      const source = { ...result }
+      source.src = fixUpUrl(node.src)
+      source.srcIsMediaSourceObjectURL = await isMediaSourceObjectURL(source.src)
+      if (source.src) {
+        if (node.closest('video') === target) {
+          sources.push(source)
+        }
+
+        if (node.closest('audio') === target) {
+          sources.push(source)
+        }
+      }
+    }
+    return sources
   }
 
   function getAllVideoElements () {
@@ -168,8 +189,10 @@
   const author = getMediaAuthor()
 
   let medias = []
-  videoElements.forEach(e => medias = medias.concat(getNodeData(e)))
-  audioElements.forEach(e => medias = medias.concat(getNodeData(e)))
+  for (const e of [...videoElements, ...audioElements]) {
+    const media = await getNodeData(e)
+    medias = medias.concat(media)
+  }
 
   if (medias.length) {
     medias[0].thumbnail = thumbnail
