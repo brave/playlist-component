@@ -52,6 +52,8 @@ medias = (async function () {
 
     if (url.startsWith('blob:')) {
       url = url.substring(5)
+      // blob: should be absolute path.
+      return url.startsWith('https://')
     }
 
     let isHttpsScheme = false
@@ -85,16 +87,7 @@ medias = (async function () {
   }
 
   /**
-   * MediaItem will be parsed into C++ object representing PlaylistItem in
-   *       {
-        "detected": boolean,
-        "mimeType": "video" | "audio",
-        "name": string,
-        "pageSrc": url,
-        "pageTitle": string
-        "src": url
-        "thumbnail": url | undefined
-      }
+   * MediaItem will be parsed into C++ object representing PlaylistItem
    * @typedef MediaItem
    * @type {object}
    * @property {string} name
@@ -233,8 +226,8 @@ medias = (async function () {
     return clampDuration(duration)
   }
 
-  const videoElements = document.querySelectorAll('video') ?? []
-  const audioElements = document.querySelectorAll('audio') ?? []
+  const videoElements = document.querySelectorAll('video')
+  const audioElements = document.querySelectorAll('audio')
   // TODO(sko) These data could be incorrect when there're multiple items.
   // For now we're assuming that the first media is a representative one.
   const thumbnail = getThumbnail()
