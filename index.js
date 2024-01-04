@@ -33,8 +33,8 @@ medias = (async function () {
     return Promise.any([
       new Promise(resolve => {
         fetch(src, { signal })
-          .then(() => false)
-          .catch(() => true)
+          .then(() => resolve(false))
+          .catch(() => resolve(true))
       }),
       maybeAbortFetch
     ])
