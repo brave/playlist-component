@@ -22,20 +22,15 @@ medias = (async function () {
 
     const controller = new AbortController()
     const signal = controller.signal
-    let timeout
     const maybeAbortFetch = new Promise(resolve =>
-      timeout = setTimeout(() => {
+      setTimeout(() => {
         resolve(false)
         controller.abort()
       }, 500)
     )
 
     return Promise.any([
-      new Promise(resolve => {
-        fetch(src, { signal })
-          .then(() => resolve(false))
-          .catch(() => resolve(true))
-      }),
+      fetch(src, { signal }).then(() => false).catch(() => true),
       maybeAbortFetch
     ])
   }
