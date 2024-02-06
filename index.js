@@ -5,7 +5,7 @@
 
 // This script is modified version of
 // https://github.com/brave/brave-ios/blob/development/Client/Frontend/UserContent/UserScripts/Playlist.js
-medias = (async function () {
+(async function (onMediaDetected) {
   // This will be replaced by native code on demand.
   const siteSpecificDetector = null
 
@@ -221,23 +221,65 @@ medias = (async function () {
     return clampDuration(duration)
   }
 
-  const videoElements = document.querySelectorAll('video')
-  const audioElements = document.querySelectorAll('audio')
-  // TODO(sko) These data could be incorrect when there're multiple items.
-  // For now we're assuming that the first media is a representative one.
-  const thumbnail = getThumbnail()
-  const author = getMediaAuthor()
+  async function detectMedia () {
+    const videoElements = document.querySelectorAll('video')
+    const audioElements = document.querySelectorAll('audio')
+    // TODO(sko) These data could be incorrect when there're multiple items.
+    // For now we're assuming that the first media is a representative one.
+    const thumbnail = getThumbnail()
+    const author = getMediaAuthor()
 
-  let medias = []
-  for (const e of [...videoElements, ...audioElements]) {
-    const media = await getNodeData(e)
-    medias = medias.concat(media)
+    let medias = []
+    for (const e of [...videoElements, ...audioElements]) {
+      const media = await getNodeData(e)
+      medias = medias.concat(media)
+    }
+
+    if (medias.length) {
+      medias[0].thumbnail = thumbnail
+      medias[0].author = author
+    }
+
+    onMediaDetected(medias)
   }
 
-  if (medias.length) {
-    medias[0].thumbnail = thumbnail
-    medias[0].author = author
+  // Firstly, we try to get find all <video> or <audio> tags periodically,
+  // for a a while from the start up. If we find them, then we attach
+  // MutationObservers to them to detect source URL.
+  // After a given amount of time, we do this in requestIdleCallback().
+  // Note that there's a global object named |pl_worker|. This worker is
+  // created and bound by PlaylistJSHandler.
+
+  const mutationSources = new Set()
+  const mutationObserver = new MutationObserver((mutations) => {
+    mutations.forEach((mutation) => {
+      detectMedia()
+    })
+  })
+  const findNewMediaAndObserveMutation = () => {
+    return document.querySelectorAll('video, audio').forEach((mediaNode) => {
+      if (mutationSources.has(mediaNode)) return
+
+      mutationSources.add(mediaNode)
+      detectMedia()
+      mutationObserver.observe(mediaNode, { attributeFilter: ['src'] })
+    })
   }
 
-  return medias
-})()
+  const pollingIntervalId = window.setInterval(
+    findNewMediaAndObserveMutation,
+    1000
+  )
+  window.setTimeout(() => {
+    window.clearInterval(pollingIntervalId)
+    window.requestIdleCallback(findNewMediaAndObserveMutation)
+    // TODO(sko) We might want to check if idle callback is waiting too
+    // long. In that case, we should get back to the polling style. And
+    // also, this time could be too long for production.
+  }, 20000)
+
+  // Try getting media after page was restored or navigated back.
+  window.addEventListener('pageshow', () => {
+    detectMedia()
+  })
+})
